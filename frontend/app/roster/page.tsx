@@ -77,64 +77,104 @@ export default function RosterPage() {
     }
   };
 
+  const PayrollIcon = () => (
+    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+    </svg>
+  );
+
+  const BackIcon = () => (
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+    </svg>
+  );
+
+  const ExportIcon = () => (
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+    </svg>
+  );
+
+  const MoneyIcon = () => (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  );
+
+  const CalendarIcon = () => (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+    </svg>
+  );
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
-          <div className="flex items-center gap-2 sm:gap-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <div className="flex items-center gap-3">
             <button
               onClick={() => router.push('/dashboard')}
-              className="text-gray-600 hover:text-gray-800 text-sm sm:text-base"
+              className="text-gray-600 hover:text-gray-900 flex items-center gap-1.5 text-sm font-medium"
             >
-              ← Return
+              <BackIcon />
+              Return
             </button>
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center gap-2">
-              <span className="text-purple-600">👥</span>
-              Roster
+            <h1 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+              <div className="w-8 h-8 bg-purple-50 rounded-lg flex items-center justify-center text-purple-600">
+                <PayrollIcon />
+              </div>
+              <span>Roster</span>
             </h1>
           </div>
           <button 
             onClick={handleExport}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm sm:text-base"
+            className="px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white rounded-md transition-all font-medium text-sm shadow-sm hover:shadow flex items-center gap-2"
           >
+            <ExportIcon />
             Export CSV
           </button>
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
-          <div className="bg-purple-100 rounded-xl p-6 border border-purple-300">
-            <div className="text-purple-600 text-3xl mb-2">💰</div>
-            <p className="text-sm text-gray-600 mb-1">Total Payroll</p>
-            <p className="text-2xl font-bold text-purple-600">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+          <div className="bg-gradient-to-br from-white via-gray-50 to-gray-100 rounded-lg border-l-4 border-purple-500 border-t border-r border-b border-gray-200 p-5 shadow-md hover:shadow-lg transition-all duration-300 hover:shadow-purple-500/20">
+            <div className="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center text-purple-600 mb-3 shadow-sm">
+              <MoneyIcon />
+            </div>
+            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Total Payroll</p>
+            <p className="text-2xl font-semibold text-purple-700">
               ${totalPayroll.toLocaleString()}
             </p>
           </div>
-          <div className="bg-white rounded-xl p-6 border border-gray-200">
-            <div className="text-orange-600 text-3xl mb-2">💰</div>
-            <p className="text-sm text-gray-600 mb-1">Total Advances</p>
-            <p className="text-2xl font-bold text-orange-600">
+          <div className="bg-gradient-to-br from-white via-gray-50 to-gray-100 rounded-lg border border-gray-200 p-5 shadow-md hover:shadow-lg transition-all duration-300 hover:shadow-orange-500/20">
+            <div className="w-10 h-10 bg-orange-50 rounded-lg flex items-center justify-center text-orange-600 mb-3 shadow-sm">
+              <MoneyIcon />
+            </div>
+            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Total Advances</p>
+            <p className="text-2xl font-semibold text-orange-700">
               ${totalAdvances.toLocaleString()}
             </p>
           </div>
-          <div className="bg-white rounded-xl p-6 border border-gray-200">
-            <div className="text-blue-600 text-3xl mb-2">📅</div>
-            <p className="text-sm text-gray-600 mb-1">Total Days Worked</p>
-            <p className="text-2xl font-bold text-blue-600">{totalDays}</p>
+          <div className="bg-gradient-to-br from-white via-gray-50 to-gray-100 rounded-lg border border-gray-200 p-5 shadow-md hover:shadow-lg transition-all duration-300 hover:shadow-blue-500/20">
+            <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600 mb-3 shadow-sm">
+              <CalendarIcon />
+            </div>
+            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Total Days Worked</p>
+            <p className="text-2xl font-semibold text-blue-700">{totalDays}</p>
           </div>
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-xl p-4 sm:p-6 mb-6 sm:mb-8 border border-gray-200">
-          <h2 className="text-base sm:text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-            🔽 Filters
+        <div className="bg-white rounded-lg p-5 mb-6 border border-gray-200">
+          <h2 className="text-base font-semibold text-gray-900 mb-4">
+            Filters
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <select
               value={filters.projectId}
               onChange={(e) => setFilters({ ...filters, projectId: e.target.value })}
-              className="px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm sm:text-base"
+              className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:border-gray-900 outline-none text-sm"
             >
               <option value="">All projects</option>
               {projects.map((p) => (
@@ -146,7 +186,7 @@ export default function RosterPage() {
             <select
               value={filters.employeeId}
               onChange={(e) => setFilters({ ...filters, employeeId: e.target.value })}
-              className="px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm sm:text-base"
+              className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:border-gray-900 outline-none text-sm"
             >
               <option value="">All employees</option>
               {employees.map((e) => (
@@ -158,7 +198,7 @@ export default function RosterPage() {
             <select
               value={filters.category}
               onChange={(e) => setFilters({ ...filters, category: e.target.value })}
-              className="px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm sm:text-base"
+              className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:border-gray-900 outline-none text-sm"
             >
               <option value="">All categories</option>
               <option value="Salary">Salary</option>
@@ -169,49 +209,49 @@ export default function RosterPage() {
             </select>
             <input
               type="text"
-              placeholder="Look for..."
+              placeholder="Search..."
               value={filters.search}
               onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-              className="px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm sm:text-base"
+              className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:border-gray-900 outline-none text-sm"
             />
           </div>
         </div>
 
         {/* Details */}
-        <div className="bg-white rounded-xl p-4 sm:p-6 border border-gray-200">
-          <h2 className="text-base sm:text-lg font-bold text-gray-800 mb-4">
+        <div className="bg-white rounded-lg p-5 border border-gray-200">
+          <h2 className="text-base font-semibold text-gray-900 mb-4">
             Details of Expenses ({filteredExpenses.length})
           </h2>
           {filteredExpenses.length === 0 ? (
-            <p className="text-center text-gray-500 py-8 text-sm sm:text-base">
+            <p className="text-center text-gray-500 py-8 text-sm">
               There are no expenses to show.
             </p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[600px]">
                 <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-semibold">Project</th>
-                    <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-semibold">Employee</th>
-                    <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-semibold">Category</th>
-                    <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-semibold">Days</th>
-                    <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-semibold">Amount</th>
-                    <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-semibold">Advancement</th>
-                    <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-semibold">Ending Balance</th>
+                  <tr className="border-b border-gray-200 bg-gray-50">
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">Project</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">Employee</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">Category</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">Days</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">Amount</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">Advancement</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">Ending Balance</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredExpenses.map((expense) => (
-                    <tr key={expense._id} className="border-b hover:bg-gray-50">
-                      <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm">{expense.projectId?.name || 'N/A'}</td>
-                      <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm">{expense.employeeId?.name || 'N/A'}</td>
-                      <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm">{expense.category}</td>
-                      <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm">{expense.daysWorked || 0}</td>
-                      <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm">${expense.amount.toLocaleString()}</td>
-                      <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm">
+                    <tr key={expense._id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                      <td className="py-3 px-4 text-sm text-gray-900">{expense.projectId?.name || 'N/A'}</td>
+                      <td className="py-3 px-4 text-sm text-gray-600">{expense.employeeId?.name || 'N/A'}</td>
+                      <td className="py-3 px-4 text-sm text-gray-600">{expense.category}</td>
+                      <td className="py-3 px-4 text-sm text-gray-600">{expense.daysWorked || 0}</td>
+                      <td className="py-3 px-4 text-sm font-medium text-gray-900">${expense.amount.toLocaleString()}</td>
+                      <td className="py-3 px-4 text-sm text-gray-600">
                         ${(expense.advancement || 0).toLocaleString()}
                       </td>
-                      <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-semibold">
+                      <td className="py-3 px-4 text-sm font-semibold text-gray-900">
                         ${calculateWeeklyBalance(expense).toLocaleString()}
                       </td>
                     </tr>

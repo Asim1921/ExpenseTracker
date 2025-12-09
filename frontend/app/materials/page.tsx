@@ -65,63 +65,104 @@ export default function MaterialsPage() {
     }
   };
 
+  const MaterialIcon = () => (
+    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+    </svg>
+  );
+
+  const BackIcon = () => (
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+    </svg>
+  );
+
+  const ExportIcon = () => (
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+    </svg>
+  );
+
+  const ReturnIcon = () => (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+    </svg>
+  );
+
+  const MoneyIcon = () => (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  );
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
-          <div className="flex items-center gap-2 sm:gap-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <div className="flex items-center gap-3">
             <button
               onClick={() => router.push('/dashboard')}
-              className="text-gray-600 hover:text-gray-800 text-sm sm:text-base"
+              className="text-gray-600 hover:text-gray-900 flex items-center gap-1.5 text-sm font-medium"
             >
-              ← Return
+              <BackIcon />
+              Return
             </button>
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center gap-2">
-              <span className="text-orange-600">📦</span>
-              Materials
+            <h1 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+              <div className="w-8 h-8 bg-orange-50 rounded-lg flex items-center justify-center text-orange-600">
+                <MaterialIcon />
+              </div>
+              <span>Materials</span>
             </h1>
           </div>
           <button 
             onClick={handleExport}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm sm:text-base"
+            className="px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white rounded-md transition-all font-medium text-sm shadow-sm hover:shadow flex items-center gap-2"
           >
+            <ExportIcon />
             Export CSV
           </button>
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
-          <div className="bg-orange-100 rounded-xl p-6 border border-orange-300">
-            <div className="text-orange-600 text-3xl mb-2">📦</div>
-            <p className="text-sm text-gray-600 mb-1">Total Materials</p>
-            <p className="text-2xl font-bold text-orange-600">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+          <div className="bg-gradient-to-br from-white via-gray-50 to-gray-100 rounded-lg border-l-4 border-orange-500 border-t border-r border-b border-gray-200 p-5 shadow-md hover:shadow-lg transition-all duration-300 hover:shadow-orange-500/20">
+            <div className="w-10 h-10 bg-orange-50 rounded-lg flex items-center justify-center text-orange-600 mb-3 shadow-sm">
+              <MaterialIcon />
+            </div>
+            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Total Materials</p>
+            <p className="text-2xl font-semibold text-orange-700">
               ${totalMaterials.toLocaleString()}
             </p>
           </div>
-          <div className="bg-white rounded-xl p-6 border border-gray-200">
-            <div className="text-green-600 text-3xl mb-2">🔄</div>
-            <p className="text-sm text-gray-600 mb-1">Total Returns</p>
-            <p className="text-2xl font-bold text-green-600">
+          <div className="bg-gradient-to-br from-white via-gray-50 to-gray-100 rounded-lg border border-gray-200 p-5 shadow-md hover:shadow-lg transition-all duration-300 hover:shadow-green-500/20">
+            <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center text-green-600 mb-3 shadow-sm">
+              <ReturnIcon />
+            </div>
+            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Total Returns</p>
+            <p className="text-2xl font-semibold text-green-700">
               ${totalReturns.toLocaleString()}
             </p>
           </div>
-          <div className="bg-white rounded-xl p-6 border border-gray-200">
-            <p className="text-sm text-gray-600 mb-1">Net Cost</p>
-            <p className="text-2xl font-bold text-blue-600">${netCost.toLocaleString()}</p>
+          <div className="bg-gradient-to-br from-white via-gray-50 to-gray-100 rounded-lg border border-gray-200 p-5 shadow-md hover:shadow-lg transition-all duration-300 hover:shadow-blue-500/20">
+            <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600 mb-3 shadow-sm">
+              <MoneyIcon />
+            </div>
+            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Net Cost</p>
+            <p className="text-2xl font-semibold text-blue-700">${netCost.toLocaleString()}</p>
           </div>
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-xl p-6 mb-8 border border-gray-200">
-          <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-            🔽 Filters
+        <div className="bg-white rounded-lg p-5 mb-6 border border-gray-200">
+          <h2 className="text-base font-semibold text-gray-900 mb-4">
+            Filters
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             <select
               value={filters.projectId}
               onChange={(e) => setFilters({ ...filters, projectId: e.target.value })}
-              className="px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm sm:text-base"
+              className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:border-gray-900 outline-none text-sm"
             >
               <option value="">All projects</option>
               {projects.map((p) => (
@@ -133,7 +174,7 @@ export default function MaterialsPage() {
             <select
               value={filters.category}
               onChange={(e) => setFilters({ ...filters, category: e.target.value })}
-              className="px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm sm:text-base"
+              className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:border-gray-900 outline-none text-sm"
             >
               <option value="">All categories</option>
               <option value="Construction">Construction</option>
@@ -145,49 +186,49 @@ export default function MaterialsPage() {
             </select>
             <input
               type="text"
-              placeholder="Look for..."
+              placeholder="Search..."
               value={filters.search}
               onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-              className="px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm sm:text-base"
+              className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:border-gray-900 outline-none text-sm"
             />
           </div>
         </div>
 
         {/* Details */}
-        <div className="bg-white rounded-xl p-4 sm:p-6 border border-gray-200">
-          <h2 className="text-base sm:text-lg font-bold text-gray-800 mb-4">
+        <div className="bg-white rounded-lg p-5 border border-gray-200">
+          <h2 className="text-base font-semibold text-gray-900 mb-4">
             Materials Details ({filteredExpenses.length})
           </h2>
           {filteredExpenses.length === 0 ? (
-            <p className="text-center text-gray-500 py-8 text-sm sm:text-base">
+            <p className="text-center text-gray-500 py-8 text-sm">
               There are no materials to show.
             </p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[600px]">
                 <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-semibold">Project</th>
-                    <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-semibold">Category</th>
-                    <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-semibold">Description</th>
-                    <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-semibold">Amount</th>
-                    <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-semibold">Return</th>
-                    <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-semibold">Net Cost</th>
+                  <tr className="border-b border-gray-200 bg-gray-50">
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">Project</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">Category</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">Description</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">Amount</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">Return</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">Net Cost</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredExpenses.map((expense) => {
                     const netCost = expense.amount - (expense.returnAmount || 0);
                     return (
-                      <tr key={expense._id} className="border-b hover:bg-gray-50">
-                        <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm">{expense.projectId?.name || 'N/A'}</td>
-                        <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm">{expense.category}</td>
-                        <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm">{expense.description || 'N/A'}</td>
-                        <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm">${expense.amount.toLocaleString()}</td>
-                        <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm">
+                      <tr key={expense._id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                        <td className="py-3 px-4 text-sm text-gray-900">{expense.projectId?.name || 'N/A'}</td>
+                        <td className="py-3 px-4 text-sm text-gray-600">{expense.category}</td>
+                        <td className="py-3 px-4 text-sm text-gray-600">{expense.description || 'N/A'}</td>
+                        <td className="py-3 px-4 text-sm font-medium text-gray-900">${expense.amount.toLocaleString()}</td>
+                        <td className="py-3 px-4 text-sm text-gray-600">
                           ${(expense.returnAmount || 0).toLocaleString()}
                         </td>
-                        <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm">${netCost.toLocaleString()}</td>
+                        <td className="py-3 px-4 text-sm font-semibold text-gray-900">${netCost.toLocaleString()}</td>
                       </tr>
                     );
                   })}

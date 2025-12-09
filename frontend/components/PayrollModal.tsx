@@ -106,44 +106,64 @@ export default function PayrollModal({ onClose, onSuccess }: PayrollModalProps) 
     }
   };
 
+  const PayrollIcon = () => (
+    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+    </svg>
+  );
+
+  const CloseIcon = () => (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+    </svg>
+  );
+
+  const AddUserIcon = () => (
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+    </svg>
+  );
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 sm:p-8 my-4 sm:my-8 animate-slide-up max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6 my-4 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-start mb-6">
           <div className="flex-1 pr-4">
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 flex items-center gap-2 sm:gap-3 mb-2">
-              <span className="text-3xl sm:text-4xl">👥</span>
+            <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2 mb-1">
+              <div className="w-8 h-8 bg-purple-50 rounded-lg flex items-center justify-center text-purple-600">
+                <PayrollIcon />
+              </div>
               <span>Add Payroll Expense</span>
             </h2>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-500">
               Record a new payroll expense with days worked and advances.
             </p>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-2xl sm:text-3xl hover:bg-gray-100 rounded-full w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center transition-colors flex-shrink-0"
+            className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md w-8 h-8 flex items-center justify-center transition-colors flex-shrink-0"
           >
-            ×
+            <CloseIcon />
           </button>
         </div>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-lg">
-            <p className="font-medium">{error}</p>
+          <div className="mb-6 p-3 bg-red-50 border-l-4 border-red-500 text-red-700 rounded">
+            <p className="text-sm font-medium">{error}</p>
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
                 Project
               </label>
               <select
                 required
                 value={formData.projectId}
                 onChange={(e) => setFormData({ ...formData, projectId: e.target.value })}
-                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:border-gray-900 outline-none transition-all text-sm"
               >
                 <option value="">Select project</option>
                 {projects.map((project) => (
@@ -155,14 +175,14 @@ export default function PayrollModal({ onClose, onSuccess }: PayrollModalProps) 
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
                 Category
               </label>
               <select
                 required
                 value={formData.category}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:border-gray-900 outline-none transition-all text-sm"
               >
                 <option value="">Select category</option>
                 <option value="Salary">Salary</option>
@@ -175,14 +195,14 @@ export default function PayrollModal({ onClose, onSuccess }: PayrollModalProps) 
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Employee (optional)
             </label>
             <div className="flex gap-2">
               <select
                 value={formData.employeeId}
                 onChange={(e) => setFormData({ ...formData, employeeId: e.target.value })}
-                className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                className="flex-1 px-3 py-2.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:border-gray-900 outline-none text-sm"
                 disabled={showAddEmployee}
               >
                 <option value="">Select employee</option>
@@ -199,15 +219,15 @@ export default function PayrollModal({ onClose, onSuccess }: PayrollModalProps) 
                   setNewEmployeeName('');
                   setError('');
                 }}
-                className="px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                className="px-3 py-2.5 bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded-md transition-colors text-sm"
                 title="Add new employee"
               >
-                👤+
+                <AddUserIcon />
               </button>
             </div>
             {showAddEmployee && (
-              <div className="mt-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+              <div className="mt-3 p-3 bg-gray-50 rounded-md border border-gray-200">
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
                   New Employee Name
                 </label>
                 <div className="flex gap-2">
@@ -222,14 +242,14 @@ export default function PayrollModal({ onClose, onSuccess }: PayrollModalProps) 
                       }
                     }}
                     placeholder="Enter employee name"
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:border-gray-900 outline-none text-sm"
                     autoFocus
                   />
                   <button
                     type="button"
                     onClick={handleAddEmployee}
                     disabled={addingEmployee || !newEmployeeName.trim()}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                    className="px-3 py-2 bg-gray-900 hover:bg-gray-800 text-white rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm"
                   >
                     {addingEmployee ? 'Adding...' : 'Add'}
                   </button>
@@ -240,7 +260,7 @@ export default function PayrollModal({ onClose, onSuccess }: PayrollModalProps) 
                       setNewEmployeeName('');
                       setError('');
                     }}
-                    className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors font-medium"
+                    className="px-3 py-2 bg-white border border-gray-300 hover:bg-gray-50 rounded-md transition-colors font-medium text-sm"
                   >
                     Cancel
                   </button>
@@ -251,7 +271,7 @@ export default function PayrollModal({ onClose, onSuccess }: PayrollModalProps) 
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
                 Days Worked
               </label>
               <input
@@ -261,12 +281,12 @@ export default function PayrollModal({ onClose, onSuccess }: PayrollModalProps) 
                 onChange={(e) =>
                   setFormData({ ...formData, daysWorked: parseInt(e.target.value) || 0 })
                 }
-                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:border-gray-900 outline-none transition-all text-sm"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
                 Advancement
               </label>
               <input
@@ -277,52 +297,52 @@ export default function PayrollModal({ onClose, onSuccess }: PayrollModalProps) 
                 onChange={(e) =>
                   setFormData({ ...formData, advancement: parseFloat(e.target.value) || 0 })
                 }
-                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:border-gray-900 outline-none transition-all text-sm"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
                 Week Start
               </label>
               <input
                 type="date"
                 value={formData.weekStart}
                 onChange={(e) => setFormData({ ...formData, weekStart: e.target.value })}
-                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:border-gray-900 outline-none transition-all text-sm"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
                 Weekend
               </label>
               <input
                 type="date"
                 value={formData.weekend}
                 onChange={(e) => setFormData({ ...formData, weekend: e.target.value })}
-                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:border-gray-900 outline-none transition-all text-sm"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Description
             </label>
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-4 py-3.5 bg-white border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all shadow-sm"
+              className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:border-gray-900 outline-none transition-all text-sm"
               rows={3}
-              placeholder="Example: Employee payments for the month of January"
+              placeholder="Enter expense description"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Amount
             </label>
             <input
@@ -334,22 +354,22 @@ export default function PayrollModal({ onClose, onSuccess }: PayrollModalProps) 
               onChange={(e) =>
                 setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })
               }
-              className="w-full px-4 py-3.5 bg-white border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all shadow-sm"
+              className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:border-gray-900 outline-none transition-all text-sm"
             />
           </div>
 
-          <div className="flex flex-col sm:flex-row justify-end gap-3 pt-6">
+          <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t border-gray-200">
             <button
               type="button"
               onClick={onClose}
-              className="w-full sm:w-auto px-6 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all font-medium text-gray-700"
+              className="w-full sm:w-auto px-5 py-2.5 border border-gray-300 rounded-md hover:bg-gray-50 transition-all font-medium text-gray-700 text-sm"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="w-full sm:w-auto px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all disabled:opacity-50 font-semibold shadow-sm hover:shadow-md"
+              className="w-full sm:w-auto px-5 py-2.5 bg-gray-900 hover:bg-gray-800 text-white rounded-md transition-all disabled:opacity-50 font-medium text-sm shadow-sm hover:shadow"
             >
               {loading ? 'Adding...' : 'Add Expense'}
             </button>

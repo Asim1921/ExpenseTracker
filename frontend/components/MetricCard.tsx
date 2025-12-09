@@ -3,40 +3,45 @@ import React from 'react';
 interface MetricCardProps {
   title: string;
   value: string;
-  icon: string;
+  icon: React.ReactNode;
   color: 'blue' | 'green' | 'red' | 'purple' | 'orange';
 }
 
 const colorConfig = {
   blue: {
-    text: 'text-blue-600',
-    bg: 'bg-gradient-to-br from-blue-50 to-blue-100',
-    iconBg: 'bg-blue-500',
-    border: 'border-blue-200',
+    text: 'text-blue-700',
+    iconColor: 'text-blue-600',
+    iconBg: 'bg-blue-50',
+    border: 'border-l-blue-500',
+    hoverGlow: 'hover:shadow-blue-500/20',
   },
   green: {
-    text: 'text-green-600',
-    bg: 'bg-gradient-to-br from-green-50 to-green-100',
-    iconBg: 'bg-green-500',
-    border: 'border-green-200',
+    text: 'text-green-700',
+    iconColor: 'text-green-600',
+    iconBg: 'bg-green-50',
+    border: 'border-l-green-500',
+    hoverGlow: 'hover:shadow-green-500/20',
   },
   red: {
-    text: 'text-red-600',
-    bg: 'bg-gradient-to-br from-red-50 to-red-100',
-    iconBg: 'bg-red-500',
-    border: 'border-red-200',
+    text: 'text-red-700',
+    iconColor: 'text-red-600',
+    iconBg: 'bg-red-50',
+    border: 'border-l-red-500',
+    hoverGlow: 'hover:shadow-red-500/20',
   },
   purple: {
-    text: 'text-purple-600',
-    bg: 'bg-gradient-to-br from-purple-50 to-purple-100',
-    iconBg: 'bg-purple-500',
-    border: 'border-purple-200',
+    text: 'text-purple-700',
+    iconColor: 'text-purple-600',
+    iconBg: 'bg-purple-50',
+    border: 'border-l-purple-500',
+    hoverGlow: 'hover:shadow-purple-500/20',
   },
   orange: {
-    text: 'text-orange-600',
-    bg: 'bg-gradient-to-br from-orange-50 to-orange-100',
-    iconBg: 'bg-orange-500',
-    border: 'border-orange-200',
+    text: 'text-orange-700',
+    iconColor: 'text-orange-600',
+    iconBg: 'bg-orange-50',
+    border: 'border-l-orange-500',
+    hoverGlow: 'hover:shadow-orange-500/20',
   },
 };
 
@@ -44,16 +49,16 @@ export default function MetricCard({ title, value, icon, color }: MetricCardProp
   const config = colorConfig[color];
   
   return (
-    <div className={`bg-white rounded-xl shadow-sm p-4 sm:p-6 border ${config.border} hover:shadow-md transition-all duration-200 group`}>
-      <div className="flex justify-between items-start">
+    <div className={`bg-gradient-to-br from-white via-gray-50 to-gray-100 rounded-lg border-l-4 ${config.border} border-t border-r border-b border-gray-200 p-5 sm:p-6 shadow-md hover:shadow-lg transition-all duration-300 group ${config.hoverGlow}`}>
+      <div className="flex items-start justify-between">
         <div className="flex-1 min-w-0">
-          <p className="text-xs sm:text-sm font-medium text-gray-600 mb-1 sm:mb-2 truncate">{title}</p>
-          <p className={`text-xl sm:text-2xl lg:text-3xl font-bold ${config.text} break-words`}>
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">{title}</p>
+          <p className={`text-2xl sm:text-3xl font-semibold ${config.text} break-words`}>
             {value}
           </p>
         </div>
-        <div className={`w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 ${config.bg} rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 ml-2`}>
-          <span className="text-lg sm:text-xl lg:text-2xl">{icon}</span>
+        <div className={`w-10 h-10 sm:w-12 sm:h-12 ${config.iconBg} rounded-lg flex items-center justify-center flex-shrink-0 ml-3 ${config.iconColor} shadow-sm`}>
+          {icon}
         </div>
       </div>
     </div>
