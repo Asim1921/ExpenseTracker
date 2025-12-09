@@ -44,5 +44,24 @@ export const userAPI = {
     api.post('/users/employees', data),
 };
 
+export const exportAPI = {
+  exportAll: (year?: string) => {
+    const params: any = { format: 'csv' };
+    if (year) params.year = year;
+    return api.get('/export/all', { 
+      params,
+      responseType: 'blob',
+    });
+  },
+  exportExpenses: (type: 'payroll' | 'operating' | 'material', year?: string) => {
+    const params: any = { format: 'csv' };
+    if (year) params.year = year;
+    return api.get(`/export/expenses/${type}`, { 
+      params,
+      responseType: 'blob',
+    });
+  },
+};
+
 export default api;
 

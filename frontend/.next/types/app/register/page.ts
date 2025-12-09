@@ -1,4 +1,4 @@
-// File: D:\Work\web\Expense-TrackingApplication\frontend\app\register\page.tsx
+// File: /home/hp/web-projects/ExpenseTracker/frontend/app/register/page.tsx
 import * as entry from '../../../../app/register/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

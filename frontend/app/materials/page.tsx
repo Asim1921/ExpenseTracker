@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { expenseAPI, projectAPI } from '@/lib/api';
+import { expenseAPI, projectAPI, exportAPI } from '@/lib/api';
 
 export default function MaterialsPage() {
   const router = useRouter();
@@ -46,6 +46,25 @@ export default function MaterialsPage() {
   const totalReturns = expenses.reduce((sum, e) => sum + (e.returnAmount || 0), 0);
   const netCost = totalMaterials - totalReturns;
 
+  const handleExport = async () => {
+    try {
+      const currentYear = new Date().getFullYear();
+      const response = await exportAPI.exportExpenses('material', currentYear.toString());
+      
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'text/csv;charset=utf-8;' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `materials-expenses-${currentYear}-${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert('Failed to export data. Please try again.');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
@@ -63,8 +82,11 @@ export default function MaterialsPage() {
               Materials
             </h1>
           </div>
-          <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm sm:text-base">
-            Export
+          <button 
+            onClick={handleExport}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm sm:text-base"
+          >
+            Export CSV
           </button>
         </div>
 

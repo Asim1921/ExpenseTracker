@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import Cookies from 'js-cookie';
 import { authAPI } from '@/lib/api';
 
@@ -39,8 +40,16 @@ export default function LoginPage() {
       
       <div className="max-w-md w-full glass-effect rounded-3xl shadow-2xl p-10 relative z-10 border border-white/50">
         <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-600 mb-6 shadow-lg shadow-primary-500/25">
-            <span className="text-4xl">📈</span>
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-white mb-6 shadow-lg shadow-primary-500/25 p-2">
+            <div className="relative w-full h-full">
+              <Image
+                src="/logo.jpg"
+                alt="Logo"
+                fill
+                className="object-contain rounded-lg"
+                priority
+              />
+            </div>
           </div>
           <h1 className="text-4xl font-bold bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent mb-3">
             Earnings Management

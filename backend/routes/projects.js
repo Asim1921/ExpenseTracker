@@ -17,10 +17,13 @@ router.get('/', authenticate, async (req, res) => {
 // Create project
 router.post('/', authenticate, async (req, res) => {
   try {
-    const { name, grossIncome } = req.body;
+    const { name, grossIncome, profitSharingEnabled, profitSharingType, profitShares } = req.body;
     const project = new Project({
       name,
       grossIncome: grossIncome || 0,
+      profitSharingEnabled: profitSharingEnabled || false,
+      profitSharingType: profitSharingType || 'none',
+      profitShares: profitShares || [],
       userId: req.userId,
     });
     await project.save();
