@@ -24,6 +24,9 @@ export default function PayrollModal({ onClose, onSuccess }: PayrollModalProps) 
   const [employees, setEmployees] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showAddEmployee, setShowAddEmployee] = useState(false);
+  const [newEmployeeName, setNewEmployeeName] = useState('');
+  const [addingEmployee, setAddingEmployee] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -39,6 +42,35 @@ export default function PayrollModal({ onClose, onSuccess }: PayrollModalProps) 
       setEmployees(employeesRes.data);
     } catch (error) {
       console.error('Error loading data:', error);
+    }
+  };
+
+  const handleAddEmployee = async () => {
+    if (!newEmployeeName.trim()) {
+      setError('Please enter an employee name');
+      return;
+    }
+
+    setAddingEmployee(true);
+    setError('');
+
+    try {
+      const response = await userAPI.createEmployee({ name: newEmployeeName.trim() });
+      const newEmployee = response.data;
+      
+      // Add the new employee to the list
+      setEmployees([...employees, newEmployee]);
+      
+      // Auto-select the newly created employee
+      setFormData({ ...formData, employeeId: newEmployee._id });
+      
+      // Reset the form
+      setNewEmployeeName('');
+      setShowAddEmployee(false);
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to create employee');
+    } finally {
+      setAddingEmployee(false);
     }
   };
 
@@ -151,6 +183,7 @@ export default function PayrollModal({ onClose, onSuccess }: PayrollModalProps) 
                 value={formData.employeeId}
                 onChange={(e) => setFormData({ ...formData, employeeId: e.target.value })}
                 className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                disabled={showAddEmployee}
               >
                 <option value="">Select employee</option>
                 {employees.map((employee) => (
@@ -161,12 +194,59 @@ export default function PayrollModal({ onClose, onSuccess }: PayrollModalProps) 
               </select>
               <button
                 type="button"
-                className="px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg"
+                onClick={() => {
+                  setShowAddEmployee(!showAddEmployee);
+                  setNewEmployeeName('');
+                  setError('');
+                }}
+                className="px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
                 title="Add new employee"
               >
                 👤+
               </button>
             </div>
+            {showAddEmployee && (
+              <div className="mt-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  New Employee Name
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newEmployeeName}
+                    onChange={(e) => setNewEmployeeName(e.target.value)}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddEmployee();
+                      }
+                    }}
+                    placeholder="Enter employee name"
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddEmployee}
+                    disabled={addingEmployee || !newEmployeeName.trim()}
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                  >
+                    {addingEmployee ? 'Adding...' : 'Add'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowAddEmployee(false);
+                      setNewEmployeeName('');
+                      setError('');
+                    }}
+                    className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors font-medium"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
