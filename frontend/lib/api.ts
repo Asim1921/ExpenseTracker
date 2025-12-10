@@ -31,7 +31,7 @@ export const projectAPI = {
 };
 
 export const expenseAPI = {
-  getAll: (params?: { type?: string; projectId?: string }) =>
+  getAll: (params?: { type?: string; projectId?: string; employeeId?: string; startDate?: string; endDate?: string }) =>
     api.get('/expenses', { params }),
   create: (data: any) => api.post('/expenses', data),
   update: (id: string, data: any) => api.put(`/expenses/${id}`, data),
@@ -40,8 +40,12 @@ export const expenseAPI = {
 
 export const userAPI = {
   getEmployees: () => api.get('/users/employees'),
-  createEmployee: (data: { name: string }) =>
+  getEmployee: (id: string) => api.get(`/users/employees/${id}`),
+  createEmployee: (data: { name: string; email?: string; phone?: string; position?: string }) =>
     api.post('/users/employees', data),
+  updateEmployee: (id: string, data: { name?: string; email?: string; phone?: string; position?: string }) =>
+    api.put(`/users/employees/${id}`, data),
+  deleteEmployee: (id: string) => api.delete(`/users/employees/${id}`),
 };
 
 export const exportAPI = {

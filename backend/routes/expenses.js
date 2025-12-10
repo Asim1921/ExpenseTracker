@@ -7,10 +7,25 @@ const router = express.Router();
 // Get all expenses for user
 router.get('/', authenticate, async (req, res) => {
   try {
-    const { type, projectId } = req.query;
+    const { type, projectId, employeeId, startDate, endDate } = req.query;
     const query = { userId: req.userId };
     if (type) query.type = type;
     if (projectId) query.projectId = projectId;
+    if (employeeId) query.employeeId = employeeId;
+    
+    // Date range filtering
+    if (startDate || endDate) {
+      query.createdAt = {};
+      if (startDate) {
+        query.createdAt.$gte = new Date(startDate);
+      }
+      if (endDate) {
+        // Set to end of day
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        query.createdAt.$lte = end;
+      }
+    }
 
     const expenses = await Expense.find(query)
       .populate('projectId', 'name')

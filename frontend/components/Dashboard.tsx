@@ -44,6 +44,27 @@ export default function Dashboard() {
   const [showPayrollModal, setShowPayrollModal] = useState(false);
   const [showOperatingModal, setShowOperatingModal] = useState(false);
   const [showMaterialModal, setShowMaterialModal] = useState(false);
+  const [dateRange, setDateRange] = useState<{ startDate: string; endDate: string }>({
+    startDate: '',
+    endDate: '',
+  });
+
+  const loadData = async () => {
+    try {
+      const params: any = {};
+      if (dateRange.startDate) params.startDate = dateRange.startDate;
+      if (dateRange.endDate) params.endDate = dateRange.endDate;
+      
+      const [projectsRes, expensesRes] = await Promise.all([
+        projectAPI.getAll(),
+        expenseAPI.getAll(params),
+      ]);
+      setProjects(projectsRes.data);
+      setExpenses(expensesRes.data);
+    } catch (error) {
+      console.error('Error loading data:', error);
+    }
+  };
 
   useEffect(() => {
     const userStr = Cookies.get('user');
@@ -55,18 +76,9 @@ export default function Dashboard() {
     loadData();
   }, [router]);
 
-  const loadData = async () => {
-    try {
-      const [projectsRes, expensesRes] = await Promise.all([
-        projectAPI.getAll(),
-        expenseAPI.getAll(),
-      ]);
-      setProjects(projectsRes.data);
-      setExpenses(expensesRes.data);
-    } catch (error) {
-      console.error('Error loading data:', error);
-    }
-  };
+  useEffect(() => {
+    loadData();
+  }, [dateRange.startDate, dateRange.endDate]);
 
   const handleLogout = () => {
     Cookies.remove('token');
@@ -170,6 +182,16 @@ export default function Dashboard() {
     </svg>
   );
 
+  const CalendarIcon = () => (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+    </svg>
+  );
+
+  const handleResetDateRange = () => {
+    setDateRange({ startDate: '', endDate: '' });
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -213,6 +235,57 @@ export default function Dashboard() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        {/* Date Range Filter */}
+        <div className="bg-white rounded-lg p-5 mb-6 border border-gray-200 shadow-sm">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600">
+                <CalendarIcon />
+              </div>
+              <div>
+                <h3 className="text-base font-semibold text-gray-900">Filter by Period</h3>
+                <p className="text-sm text-gray-600">View expenses and metrics for a specific time period</p>
+              </div>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+              <div className="flex gap-2">
+                <input
+                  type="date"
+                  value={dateRange.startDate}
+                  onChange={(e) => setDateRange({ ...dateRange, startDate: e.target.value })}
+                  className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:border-gray-900 outline-none text-sm"
+                  placeholder="Start Date"
+                />
+                <input
+                  type="date"
+                  value={dateRange.endDate}
+                  onChange={(e) => setDateRange({ ...dateRange, endDate: e.target.value })}
+                  className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:border-gray-900 outline-none text-sm"
+                  placeholder="End Date"
+                />
+              </div>
+              {(dateRange.startDate || dateRange.endDate) && (
+                <button
+                  onClick={handleResetDateRange}
+                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded-md transition-all font-medium text-gray-700 text-sm"
+                >
+                  Reset
+                </button>
+              )}
+            </div>
+          </div>
+          {(dateRange.startDate || dateRange.endDate) && (
+            <div className="mt-3 pt-3 border-t border-gray-200">
+              <p className="text-sm text-gray-600">
+                Showing data from{' '}
+                <span className="font-medium text-gray-900">
+                  {dateRange.startDate || 'beginning'} to {dateRange.endDate || 'today'}
+                </span>
+              </p>
+            </div>
+          )}
+        </div>
+
         {/* Action Buttons */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
           <ActionButton

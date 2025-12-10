@@ -25,7 +25,12 @@ export default function PayrollModal({ onClose, onSuccess }: PayrollModalProps) 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showAddEmployee, setShowAddEmployee] = useState(false);
-  const [newEmployeeName, setNewEmployeeName] = useState('');
+  const [newEmployee, setNewEmployee] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    position: '',
+  });
   const [addingEmployee, setAddingEmployee] = useState(false);
 
   useEffect(() => {
@@ -46,7 +51,7 @@ export default function PayrollModal({ onClose, onSuccess }: PayrollModalProps) 
   };
 
   const handleAddEmployee = async () => {
-    if (!newEmployeeName.trim()) {
+    if (!newEmployee.name.trim()) {
       setError('Please enter an employee name');
       return;
     }
@@ -55,17 +60,22 @@ export default function PayrollModal({ onClose, onSuccess }: PayrollModalProps) 
     setError('');
 
     try {
-      const response = await userAPI.createEmployee({ name: newEmployeeName.trim() });
-      const newEmployee = response.data;
+      const response = await userAPI.createEmployee({
+        name: newEmployee.name.trim(),
+        email: newEmployee.email.trim() || undefined,
+        phone: newEmployee.phone.trim() || undefined,
+        position: newEmployee.position.trim() || undefined,
+      });
+      const createdEmployee = response.data;
       
       // Add the new employee to the list
-      setEmployees([...employees, newEmployee]);
+      setEmployees([...employees, createdEmployee]);
       
       // Auto-select the newly created employee
-      setFormData({ ...formData, employeeId: newEmployee._id });
+      setFormData({ ...formData, employeeId: createdEmployee._id });
       
       // Reset the form
-      setNewEmployeeName('');
+      setNewEmployee({ name: '', email: '', phone: '', position: '' });
       setShowAddEmployee(false);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to create employee');
@@ -216,7 +226,7 @@ export default function PayrollModal({ onClose, onSuccess }: PayrollModalProps) 
                 type="button"
                 onClick={() => {
                   setShowAddEmployee(!showAddEmployee);
-                  setNewEmployeeName('');
+                  setNewEmployee({ name: '', email: '', phone: '', position: '' });
                   setError('');
                 }}
                 className="px-3 py-2.5 bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded-md transition-colors text-sm"
@@ -226,38 +236,67 @@ export default function PayrollModal({ onClose, onSuccess }: PayrollModalProps) 
               </button>
             </div>
             {showAddEmployee && (
-              <div className="mt-3 p-3 bg-gray-50 rounded-md border border-gray-200">
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  New Employee Name
-                </label>
-                <div className="flex gap-2">
+              <div className="mt-3 p-4 bg-gray-50 rounded-md border border-gray-200 space-y-3">
+                <h4 className="text-sm font-medium text-gray-700 mb-2">Add New Employee</h4>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Name <span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="text"
-                    value={newEmployeeName}
-                    onChange={(e) => setNewEmployeeName(e.target.value)}
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        handleAddEmployee();
-                      }
-                    }}
-                    placeholder="Enter employee name"
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:border-gray-900 outline-none text-sm"
+                    value={newEmployee.name}
+                    onChange={(e) => setNewEmployee({ ...newEmployee, name: e.target.value })}
+                    placeholder="Employee name"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:border-gray-900 outline-none text-sm"
                     autoFocus
                   />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Email</label>
+                    <input
+                      type="email"
+                      value={newEmployee.email}
+                      onChange={(e) => setNewEmployee({ ...newEmployee, email: e.target.value })}
+                      placeholder="email@example.com"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:border-gray-900 outline-none text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Phone</label>
+                    <input
+                      type="tel"
+                      value={newEmployee.phone}
+                      onChange={(e) => setNewEmployee({ ...newEmployee, phone: e.target.value })}
+                      placeholder="Phone number"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:border-gray-900 outline-none text-sm"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Position</label>
+                  <input
+                    type="text"
+                    value={newEmployee.position}
+                    onChange={(e) => setNewEmployee({ ...newEmployee, position: e.target.value })}
+                    placeholder="Job title"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:border-gray-900 outline-none text-sm"
+                  />
+                </div>
+                <div className="flex gap-2 pt-2">
                   <button
                     type="button"
                     onClick={handleAddEmployee}
-                    disabled={addingEmployee || !newEmployeeName.trim()}
-                    className="px-3 py-2 bg-gray-900 hover:bg-gray-800 text-white rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm"
+                    disabled={addingEmployee || !newEmployee.name.trim()}
+                    className="flex-1 px-3 py-2 bg-gray-900 hover:bg-gray-800 text-white rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm"
                   >
-                    {addingEmployee ? 'Adding...' : 'Add'}
+                    {addingEmployee ? 'Adding...' : 'Add Employee'}
                   </button>
                   <button
                     type="button"
                     onClick={() => {
                       setShowAddEmployee(false);
-                      setNewEmployeeName('');
+                      setNewEmployee({ name: '', email: '', phone: '', position: '' });
                       setError('');
                     }}
                     className="px-3 py-2 bg-white border border-gray-300 hover:bg-gray-50 rounded-md transition-colors font-medium text-sm"
