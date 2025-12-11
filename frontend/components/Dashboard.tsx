@@ -20,6 +20,7 @@ interface Project {
   profitSharingEnabled?: boolean;
   profitSharingType?: string;
   profitShares?: Array<{ name: string; percentage: number }>;
+  createdAt?: string;
 }
 
 interface Expense {
@@ -31,6 +32,11 @@ interface Expense {
     _id: string;
     name?: string;
   } | string;
+  employeeId?: {
+    _id: string;
+    name?: string;
+  } | string;
+  createdAt?: string;
 }
 
 export default function Dashboard() {
@@ -38,6 +44,7 @@ export default function Dashboard() {
   const [user, setUser] = useState<any>(null);
   const [projects, setProjects] = useState<Project[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'projects'>('dashboard');
   const [showProjectModal, setShowProjectModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
@@ -132,6 +139,64 @@ export default function Dashboard() {
 
   const metrics = calculateMetrics();
 
+  // Calculate chart data
+  const getMonthlyData = () => {
+    const months = ['Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const monthlyIncome: number[] = [];
+    const monthlyBills: number[] = [];
+
+    months.forEach((_, index) => {
+      const monthStart = new Date(2024, 6 + index, 1);
+      const monthEnd = new Date(2024, 7 + index, 0);
+      
+      const monthProjects = projects.filter(p => {
+        const created = new Date(p.createdAt || Date.now());
+        return created >= monthStart && created <= monthEnd;
+      });
+      const monthExpenses = expenses.filter(e => {
+        const created = new Date(e.createdAt || Date.now());
+        return created >= monthStart && created <= monthEnd;
+      });
+
+      monthlyIncome.push(monthProjects.reduce((sum, p) => sum + p.grossIncome, 0));
+      monthlyBills.push(monthExpenses.reduce((sum, e) => sum + e.amount, 0));
+    });
+
+    return { months, monthlyIncome, monthlyBills };
+  };
+
+  const { months, monthlyIncome, monthlyBills } = getMonthlyData();
+  const maxValue = Math.max(...monthlyIncome, ...monthlyBills, 3000);
+  const chartHeight = 200;
+  const chartWidth = 600;
+
+  const getProjectComparisonData = () => {
+    return projects.map(project => {
+      const projectExpenses = expenses.filter(e => {
+        const expenseProjectId = typeof e.projectId === 'object' ? e.projectId?._id : e.projectId;
+        return expenseProjectId === project._id;
+      });
+      const totalExpenses = projectExpenses.reduce((sum, e) => sum + e.amount, 0);
+      return {
+        name: project.name,
+        income: project.grossIncome,
+        revenue: project.grossIncome - totalExpenses,
+      };
+    });
+  };
+
+  const projectComparisonData = getProjectComparisonData();
+  const maxProjectValue = Math.max(...projectComparisonData.map(p => Math.max(p.income, p.revenue)), 3000);
+
+  const profitableProjects = projects.filter(project => {
+    const projectExpenses = expenses.filter(e => {
+      const expenseProjectId = typeof e.projectId === 'object' ? e.projectId?._id : e.projectId;
+      return expenseProjectId === project._id;
+    });
+    const totalExpenses = projectExpenses.reduce((sum, e) => sum + e.amount, 0);
+    return project.grossIncome - totalExpenses > 0;
+  }).length;
+
   // Professional SVG Icons
   const RevenueIcon = () => (
     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -167,6 +232,12 @@ export default function Dashboard() {
   const MaterialIcon = () => (
     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+    </svg>
+  );
+
+  const DocumentIcon = () => (
+    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
     </svg>
   );
 
@@ -235,148 +306,462 @@ export default function Dashboard() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-        {/* Date Range Filter */}
-        <div className="bg-white rounded-lg p-5 mb-6 border border-gray-200 shadow-sm">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600">
-                <CalendarIcon />
-              </div>
-              <div>
-                <h3 className="text-base font-semibold text-gray-900">Filter by Period</h3>
-                <p className="text-sm text-gray-600">View expenses and metrics for a specific time period</p>
-              </div>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-              <div className="flex gap-2">
-                <input
-                  type="date"
-                  value={dateRange.startDate}
-                  onChange={(e) => setDateRange({ ...dateRange, startDate: e.target.value })}
-                  className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:border-gray-900 outline-none text-sm"
-                  placeholder="Start Date"
-                />
-                <input
-                  type="date"
-                  value={dateRange.endDate}
-                  onChange={(e) => setDateRange({ ...dateRange, endDate: e.target.value })}
-                  className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:border-gray-900 outline-none text-sm"
-                  placeholder="End Date"
-                />
-              </div>
-              {(dateRange.startDate || dateRange.endDate) && (
-                <button
-                  onClick={handleResetDateRange}
-                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded-md transition-all font-medium text-gray-700 text-sm"
-                >
-                  Reset
-                </button>
-              )}
-            </div>
-          </div>
-          {(dateRange.startDate || dateRange.endDate) && (
-            <div className="mt-3 pt-3 border-t border-gray-200">
-              <p className="text-sm text-gray-600">
-                Showing data from{' '}
-                <span className="font-medium text-gray-900">
-                  {dateRange.startDate || 'beginning'} to {dateRange.endDate || 'today'}
-                </span>
-              </p>
-            </div>
-          )}
-        </div>
 
-        {/* Action Buttons */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-          <ActionButton
-            label="View Detailed Payroll"
-            icon={<PayrollIcon />}
-            color="purple"
-            onClick={() => router.push('/roster')}
-          />
-          <ActionButton
-            label="View Operating Expenses"
-            icon={<OperatingIcon />}
-            color="blue"
-            onClick={() => router.push('/operating-expenses')}
-          />
-          <ActionButton
-            label="View Materials"
-            icon={<MaterialIcon />}
-            color="orange"
-            onClick={() => router.push('/materials')}
-          />
-        </div>
-
-        {/* Year-End Export */}
-        <div className="bg-white rounded-lg p-5 mb-6 border border-gray-200 shadow-sm">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-              <h3 className="text-base font-semibold text-gray-900 mb-1 flex items-center gap-2">
-                <ExportIcon />
-                Year-End Data Export
-              </h3>
-              <p className="text-sm text-gray-600">
-                Download all your data (projects, expenses, employees) for backup and review.
-              </p>
-            </div>
+        {/* Tabs */}
+        <div className="bg-white rounded-lg border border-gray-200 mb-6">
+          <div className="flex border-b border-gray-200">
             <button
-              onClick={handleYearEndExport}
-              className="px-5 py-2.5 bg-gray-900 hover:bg-gray-800 text-white rounded-md transition-all font-medium text-sm shadow-sm hover:shadow flex items-center gap-2"
+              onClick={() => setActiveTab('dashboard')}
+              className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                activeTab === 'dashboard'
+                  ? 'text-gray-900 border-b-2 border-gray-900 bg-gray-50'
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+              }`}
             >
-              <ExportIcon />
-              Export CSV
+              <span className="flex items-center justify-center gap-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                </svg>
+                Dashboard
+              </span>
+            </button>
+            <button
+              onClick={() => setActiveTab('projects')}
+              className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                activeTab === 'projects'
+                  ? 'text-gray-900 border-b-2 border-gray-900 bg-gray-50'
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <span className="flex items-center justify-center gap-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                </svg>
+                Projects
+              </span>
             </button>
           </div>
         </div>
 
-        {/* Key Metrics */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-          <MetricCard
-            title="Total Revenue"
-            value={`$${metrics.totalRevenue.toLocaleString()}`}
-            icon={<RevenueIcon />}
-            color="blue"
-          />
-          <MetricCard
-            title="Net Profit"
-            value={`$${metrics.netProfit.toLocaleString()}`}
-            icon={<ProfitIcon />}
-            color="green"
-          />
-          <MetricCard
-            title="Profit Margin"
-            value={`${metrics.profitMargin.toFixed(1)}%`}
-            icon={<MarginIcon />}
-            color="red"
-          />
-        </div>
+        {activeTab === 'dashboard' && (
+          <>
+            {/* Date Range Filter */}
+            <div className="bg-white rounded-lg p-5 mb-6 border border-gray-200 shadow-sm">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600">
+                    <CalendarIcon />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-semibold text-gray-900">Filter by Period</h3>
+                    <p className="text-sm text-gray-600">View expenses and metrics for a specific time period</p>
+                  </div>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                  <div className="flex gap-2">
+                    <input
+                      type="date"
+                      value={dateRange.startDate}
+                      onChange={(e) => setDateRange({ ...dateRange, startDate: e.target.value })}
+                      className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:border-gray-900 outline-none text-sm"
+                      placeholder="Start Date"
+                    />
+                    <input
+                      type="date"
+                      value={dateRange.endDate}
+                      onChange={(e) => setDateRange({ ...dateRange, endDate: e.target.value })}
+                      className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:border-gray-900 outline-none text-sm"
+                      placeholder="End Date"
+                    />
+                  </div>
+                  {(dateRange.startDate || dateRange.endDate) && (
+                    <button
+                      onClick={handleResetDateRange}
+                      className="px-4 py-2 bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded-md transition-all font-medium text-gray-700 text-sm"
+                    >
+                      Reset
+                    </button>
+                  )}
+                </div>
+              </div>
+              {(dateRange.startDate || dateRange.endDate) && (
+                <div className="mt-3 pt-3 border-t border-gray-200">
+                  <p className="text-sm text-gray-600">
+                    Showing data from{' '}
+                    <span className="font-medium text-gray-900">
+                      {dateRange.startDate || 'beginning'} to {dateRange.endDate || 'today'}
+                    </span>
+                  </p>
+                </div>
+              )}
+            </div>
 
-        {/* Expense Metrics */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-          <MetricCard
-            title="Payroll Expenses"
-            value={`$${metrics.payrollExpenses.toLocaleString()}`}
-            icon={<PayrollIcon />}
-            color="purple"
-          />
-          <MetricCard
-            title="Operating Expenses"
-            value={`$${metrics.operatingExpenses.toLocaleString()}`}
-            icon={<OperatingIcon />}
-            color="blue"
-          />
-          <MetricCard
-            title="Material Expenses"
-            value={`$${metrics.materialExpenses.toLocaleString()}`}
-            icon={<MaterialIcon />}
-            color="orange"
-          />
-        </div>
+            {/* Action Buttons */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              <ActionButton
+                label="Dear"
+                icon={<DocumentIcon />}
+                color="blue"
+                onClick={() => router.push('/dear')}
+              />
+              <ActionButton
+                label="Roster"
+                icon={<PayrollIcon />}
+                color="purple"
+                onClick={() => router.push('/roster')}
+              />
+              <ActionButton
+                label="Operating Expenses"
+                icon={<OperatingIcon />}
+                color="blue"
+                onClick={() => router.push('/operating-expenses')}
+              />
+              <ActionButton
+                label="Materials"
+                icon={<MaterialIcon />}
+                color="orange"
+                onClick={() => router.push('/materials')}
+              />
+            </div>
 
-        {/* Projects Section */}
-        <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            {/* Year-End Export */}
+            <div className="bg-white rounded-lg p-5 mb-6 border border-gray-200 shadow-sm">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                  <h3 className="text-base font-semibold text-gray-900 mb-1 flex items-center gap-2">
+                    <ExportIcon />
+                    Year-End Data Export
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    Download all your data (projects, expenses, employees) for backup and review.
+                  </p>
+                </div>
+                <button
+                  onClick={handleYearEndExport}
+                  className="px-5 py-2.5 bg-gray-900 hover:bg-gray-800 text-white rounded-md transition-all font-medium text-sm shadow-sm hover:shadow flex items-center gap-2"
+                >
+                  <ExportIcon />
+                  Export CSV
+                </button>
+              </div>
+            </div>
+
+            {/* Key Metrics */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+              <MetricCard
+                title="Total Revenue"
+                value={`$${metrics.totalRevenue.toLocaleString()}`}
+                icon={<RevenueIcon />}
+                color="blue"
+              />
+              <MetricCard
+                title="Net Profit"
+                value={`$${metrics.netProfit.toLocaleString()}`}
+                icon={<ProfitIcon />}
+                color="green"
+              />
+              <MetricCard
+                title="Profit Margin"
+                value={`${metrics.profitMargin.toFixed(1)}%`}
+                icon={<MarginIcon />}
+                color="red"
+              />
+            </div>
+
+            {/* Expense Metrics */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+              <MetricCard
+                title="Payroll Expenses"
+                value={`$${metrics.payrollExpenses.toLocaleString()}`}
+                icon={<PayrollIcon />}
+                color="purple"
+              />
+              <MetricCard
+                title="Operating Expenses"
+                value={`$${metrics.operatingExpenses.toLocaleString()}`}
+                icon={<OperatingIcon />}
+                color="blue"
+              />
+              <MetricCard
+                title="Material Expenses"
+                value={`$${metrics.materialExpenses.toLocaleString()}`}
+                icon={<MaterialIcon />}
+                color="orange"
+              />
+            </div>
+
+            {/* Dashboard Tab Content */}
+            <div className="space-y-6">
+            {/* Charts Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              {/* Monthly Trend Chart */}
+              <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <h3 className="text-base font-semibold text-gray-900 mb-4">Monthly Trend</h3>
+                <div className="h-[200px] flex items-end justify-between gap-2">
+                  {months.map((month, index) => {
+                    const incomeHeight = (monthlyIncome[index] / maxValue) * chartHeight;
+                    const billsHeight = (monthlyBills[index] / maxValue) * chartHeight;
+                    return (
+                      <div key={index} className="flex-1 flex flex-col items-center gap-1">
+                        <div className="w-full flex items-end justify-center gap-1" style={{ height: `${chartHeight}px` }}>
+                          <div
+                            className="w-1/2 bg-blue-500 rounded-t"
+                            style={{ height: `${incomeHeight}px` }}
+                            title={`Income: $${monthlyIncome[index]}`}
+                          />
+                          <div
+                            className="w-1/2 bg-red-500 rounded-t"
+                            style={{ height: `${billsHeight}px` }}
+                            title={`Bills: $${monthlyBills[index]}`}
+                          />
+                        </div>
+                        <span className="text-xs text-gray-600 mt-2">{month}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="flex justify-center gap-4 mt-4">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-blue-500 rounded"></div>
+                    <span className="text-xs text-gray-600">Income</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-red-500 rounded"></div>
+                    <span className="text-xs text-gray-600">Bills</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Distribution of Expenses */}
+              <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <h3 className="text-base font-semibold text-gray-900 mb-4">Distribution of Expenses</h3>
+                {metrics.payrollExpenses + metrics.operatingExpenses + metrics.materialExpenses === 0 ? (
+                  <div className="h-[200px] flex items-center justify-center">
+                    <p className="text-gray-500 text-sm">No spending data</p>
+                  </div>
+                ) : (
+                  <div className="h-[200px] flex items-center justify-center">
+                    <div className="relative w-32 h-32">
+                      <svg className="transform -rotate-90" width="128" height="128">
+                        <circle
+                          cx="64"
+                          cy="64"
+                          r="56"
+                          fill="none"
+                          stroke="#e5e7eb"
+                          strokeWidth="16"
+                        />
+                        {metrics.payrollExpenses > 0 && (
+                          <circle
+                            cx="64"
+                            cy="64"
+                            r="56"
+                            fill="none"
+                            stroke="#9333ea"
+                            strokeWidth="16"
+                            strokeDasharray={`${(metrics.payrollExpenses / (metrics.payrollExpenses + metrics.operatingExpenses + metrics.materialExpenses)) * 352} 352`}
+                          />
+                        )}
+                        {metrics.operatingExpenses > 0 && (
+                          <circle
+                            cx="64"
+                            cy="64"
+                            r="56"
+                            fill="none"
+                            stroke="#3b82f6"
+                            strokeWidth="16"
+                            strokeDasharray={`${(metrics.operatingExpenses / (metrics.payrollExpenses + metrics.operatingExpenses + metrics.materialExpenses)) * 352} 352`}
+                            strokeDashoffset={-(metrics.payrollExpenses / (metrics.payrollExpenses + metrics.operatingExpenses + metrics.materialExpenses)) * 352}
+                          />
+                        )}
+                        {metrics.materialExpenses > 0 && (
+                          <circle
+                            cx="64"
+                            cy="64"
+                            r="56"
+                            fill="none"
+                            stroke="#f97316"
+                            strokeWidth="16"
+                            strokeDasharray={`${(metrics.materialExpenses / (metrics.payrollExpenses + metrics.operatingExpenses + metrics.materialExpenses)) * 352} 352`}
+                            strokeDashoffset={-((metrics.payrollExpenses + metrics.operatingExpenses) / (metrics.payrollExpenses + metrics.operatingExpenses + metrics.materialExpenses)) * 352}
+                          />
+                        )}
+                      </svg>
+                    </div>
+                  </div>
+                )}
+                <div className="flex justify-center gap-4 mt-4 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-purple-500 rounded"></div>
+                    <span className="text-xs text-gray-600">Payroll</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-blue-500 rounded"></div>
+                    <span className="text-xs text-gray-600">Operating</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-orange-500 rounded"></div>
+                    <span className="text-xs text-gray-600">Materials</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Project Comparison and Status */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              {/* Project Comparison */}
+              <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <h3 className="text-base font-semibold text-gray-900 mb-4">Project Comparison</h3>
+                {projectComparisonData.length === 0 ? (
+                  <div className="h-[200px] flex items-center justify-center">
+                    <p className="text-gray-500 text-sm">No projects</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {projectComparisonData.map((project, index) => {
+                      const incomeWidth = (project.income / maxProjectValue) * 100;
+                      const revenueWidth = (project.revenue / maxProjectValue) * 100;
+                      return (
+                        <div key={index}>
+                          <p className="text-sm font-medium text-gray-900 mb-2">{project.name}</p>
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <div className="w-16 text-xs text-gray-600">Income:</div>
+                              <div className="flex-1 bg-gray-200 rounded h-4 relative">
+                                <div
+                                  className="bg-blue-500 h-4 rounded"
+                                  style={{ width: `${incomeWidth}%` }}
+                                />
+                              </div>
+                              <div className="w-16 text-xs text-gray-900 text-right">${project.income.toLocaleString()}</div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="w-16 text-xs text-gray-600">Revenue:</div>
+                              <div className="flex-1 bg-gray-200 rounded h-4 relative">
+                                <div
+                                  className="bg-green-500 h-4 rounded"
+                                  style={{ width: `${revenueWidth}%` }}
+                                />
+                              </div>
+                              <div className="w-16 text-xs text-gray-900 text-right">${project.revenue.toLocaleString()}</div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    <div className="flex justify-center gap-4 mt-4">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 bg-blue-500 rounded"></div>
+                        <span className="text-xs text-gray-600">Income</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 bg-red-500 rounded"></div>
+                        <span className="text-xs text-gray-600">Bills</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 bg-green-500 rounded"></div>
+                        <span className="text-xs text-gray-600">Revenue</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Project Status */}
+              <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <h3 className="text-base font-semibold text-gray-900 mb-4">Project Status</h3>
+                <div className="flex items-center justify-center mb-6">
+                  <div className="relative w-32 h-32">
+                    <svg className="transform -rotate-90" width="128" height="128">
+                      <circle
+                        cx="64"
+                        cy="64"
+                        r="56"
+                        fill="none"
+                        stroke="#e5e7eb"
+                        strokeWidth="16"
+                      />
+                      {profitableProjects > 0 && (
+                        <circle
+                          cx="64"
+                          cy="64"
+                          r="56"
+                          fill="none"
+                          stroke="#10b981"
+                          strokeWidth="16"
+                          strokeDasharray={`${(profitableProjects / projects.length) * 352} 352`}
+                        />
+                      )}
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="text-center">
+                        <p className="text-2xl font-semibold text-gray-900">{profitableProjects}</p>
+                        <p className="text-xs text-gray-600">Profitable</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Total Revenue:</span>
+                    <span className="font-medium text-gray-900">$ {metrics.totalRevenue.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Total Expenses:</span>
+                    <span className="font-medium text-red-600">${metrics.payrollExpenses + metrics.operatingExpenses + metrics.materialExpenses}</span>
+                  </div>
+                  <div className="flex justify-between text-sm font-semibold pt-2 border-t border-gray-200">
+                    <span className="text-gray-900">Total Profit:</span>
+                    <span className="text-green-600">${metrics.netProfit.toLocaleString()}</span>
+                  </div>
+                </div>
+                <div className="mt-4 text-sm text-gray-600">
+                  <span className="font-medium">Rentables: {profitableProjects}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Employee Distribution by Project */}
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <h3 className="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <PayrollIcon />
+                Employee Distribution by Project
+              </h3>
+              {expenses.filter(e => e.type === 'payroll' && e.employeeId).length === 0 ? (
+                <div className="h-[200px] flex items-center justify-center">
+                  <p className="text-gray-500 text-sm">There are no employees assigned to projects</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {projects.map(project => {
+                    const projectExpenses = expenses.filter(e => {
+                      const expenseProjectId = typeof e.projectId === 'object' ? e.projectId?._id : e.projectId;
+                      return expenseProjectId === project._id && e.type === 'payroll' && e.employeeId;
+                    });
+                    if (projectExpenses.length === 0) return null;
+                    
+                    const employeeIds = projectExpenses
+                      .map(e => (typeof e.employeeId === 'object' ? e.employeeId?._id : e.employeeId))
+                      .filter(Boolean) as string[];
+                    const employeeCount = new Set(employeeIds).size;
+                    return (
+                      <div key={project._id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <span className="text-sm font-medium text-gray-900">{project.name}</span>
+                        <span className="text-sm text-gray-600">{employeeCount} employee{employeeCount !== 1 ? 's' : ''}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+          </>
+        )}
+
+        {/* Projects Tab Content */}
+        {activeTab === 'projects' && (
+          <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <h2 className="text-xl font-semibold text-gray-900">Projects</h2>
             <div className="flex flex-wrap gap-2 w-full sm:w-auto">
               <button
@@ -560,7 +945,8 @@ export default function Dashboard() {
               </table>
             </div>
           )}
-        </div>
+          </div>
+        )}
       </main>
 
       {/* Modals */}

@@ -7,6 +7,7 @@ import projectRoutes from './routes/projects.js';
 import expenseRoutes from './routes/expenses.js';
 import userRoutes from './routes/users.js';
 import exportRoutes from './routes/export.js';
+import estimateRoutes from './routes/estimates.js';
 
 dotenv.config();
 
@@ -23,6 +24,7 @@ app.use('/api/projects', projectRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/export', exportRoutes);
+app.use('/api/estimates', estimateRoutes);
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/expense-tracking')

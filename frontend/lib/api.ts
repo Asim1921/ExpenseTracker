@@ -67,5 +67,14 @@ export const exportAPI = {
   },
 };
 
+export const estimateAPI = {
+  getAll: (params?: { status?: string; search?: string }) =>
+    api.get('/estimates', { params }),
+  get: (id: string) => api.get(`/estimates/${id}`),
+  create: (data: any) => api.post('/estimates', data),
+  update: (id: string, data: any) => api.put(`/estimates/${id}`, data),
+  delete: (id: string) => api.delete(`/estimates/${id}`),
+};
+
 export default api;
 
