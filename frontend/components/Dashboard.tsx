@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Cookies from 'js-cookie';
-import { projectAPI, expenseAPI, exportAPI } from '@/lib/api';
+import { projectAPI, expenseAPI, exportAPI, userAPI } from '@/lib/api';
 import MetricCard from './MetricCard';
 import ActionButton from './ActionButton';
 import ProjectModal from './ProjectModal';
@@ -37,6 +37,12 @@ interface Expense {
     name?: string;
   } | string;
   createdAt?: string;
+  daysWorked?: number;
+  advancement?: number;
+  category?: string;
+  description?: string;
+  weekStart?: string;
+  weekend?: string;
 }
 
 export default function Dashboard() {
@@ -44,6 +50,7 @@ export default function Dashboard() {
   const [user, setUser] = useState<any>(null);
   const [projects, setProjects] = useState<Project[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [employees, setEmployees] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'projects'>('dashboard');
   const [showProjectModal, setShowProjectModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
@@ -51,6 +58,8 @@ export default function Dashboard() {
   const [showPayrollModal, setShowPayrollModal] = useState(false);
   const [showOperatingModal, setShowOperatingModal] = useState(false);
   const [showMaterialModal, setShowMaterialModal] = useState(false);
+  const [showEmployeeModal, setShowEmployeeModal] = useState(false);
+  const [selectedProjectForEmployees, setSelectedProjectForEmployees] = useState<Project | null>(null);
   const [dateRange, setDateRange] = useState<{ startDate: string; endDate: string }>({
     startDate: '',
     endDate: '',
@@ -62,12 +71,14 @@ export default function Dashboard() {
       if (dateRange.startDate) params.startDate = dateRange.startDate;
       if (dateRange.endDate) params.endDate = dateRange.endDate;
       
-      const [projectsRes, expensesRes] = await Promise.all([
+      const [projectsRes, expensesRes, employeesRes] = await Promise.all([
         projectAPI.getAll(),
         expenseAPI.getAll(params),
+        userAPI.getEmployees(),
       ]);
       setProjects(projectsRes.data);
       setExpenses(expensesRes.data);
+      setEmployees(employeesRes.data);
     } catch (error) {
       console.error('Error loading data:', error);
     }
@@ -141,26 +152,94 @@ export default function Dashboard() {
 
   // Calculate chart data
   const getMonthlyData = () => {
-    const months = ['Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth(); // 0-11
+    
+    // Determine the year and months to display
+    let startYear = currentYear;
+    let startMonth = currentMonth - 5; // Show last 6 months
+    
+    // Adjust if we go into previous year
+    if (startMonth < 0) {
+      startYear -= 1;
+      startMonth += 12;
+    }
+    
+    // If date range is set, use that instead
+    if (dateRange.startDate || dateRange.endDate) {
+      const startDate = dateRange.startDate ? new Date(dateRange.startDate) : new Date(currentYear, 0, 1);
+      const endDate = dateRange.endDate ? new Date(dateRange.endDate) : now;
+      
+      startYear = startDate.getFullYear();
+      startMonth = startDate.getMonth();
+      
+      // Calculate number of months in range
+      const monthsDiff = (endDate.getFullYear() - startYear) * 12 + (endDate.getMonth() - startMonth) + 1;
+      const monthsToShow = Math.min(monthsDiff, 12); // Max 12 months
+      
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const months: string[] = [];
+      const monthlyIncome: number[] = [];
+      const monthlyBills: number[] = [];
+      
+      for (let i = 0; i < monthsToShow; i++) {
+        const monthIndex = (startMonth + i) % 12;
+        const year = startYear + Math.floor((startMonth + i) / 12);
+        
+        const monthStart = new Date(year, monthIndex, 1);
+        const monthEnd = new Date(year, monthIndex + 1, 0, 23, 59, 59, 999);
+        
+        // Filter projects and expenses within this month
+        const monthProjects = projects.filter(p => {
+          if (!p.createdAt) return false;
+          const created = new Date(p.createdAt);
+          return created >= monthStart && created <= monthEnd;
+        });
+        
+        const monthExpenses = expenses.filter(e => {
+          if (!e.createdAt) return false;
+          const created = new Date(e.createdAt);
+          return created >= monthStart && created <= monthEnd;
+        });
+        
+        months.push(monthNames[monthIndex]);
+        monthlyIncome.push(monthProjects.reduce((sum, p) => sum + p.grossIncome, 0));
+        monthlyBills.push(monthExpenses.reduce((sum, e) => sum + e.amount, 0));
+      }
+      
+      return { months, monthlyIncome, monthlyBills };
+    }
+    
+    // Default: Show last 6 months
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const months: string[] = [];
     const monthlyIncome: number[] = [];
     const monthlyBills: number[] = [];
 
-    months.forEach((_, index) => {
-      const monthStart = new Date(2024, 6 + index, 1);
-      const monthEnd = new Date(2024, 7 + index, 0);
+    for (let i = 0; i < 6; i++) {
+      const monthIndex = (startMonth + i) % 12;
+      const year = startYear + Math.floor((startMonth + i) / 12);
+      
+      const monthStart = new Date(year, monthIndex, 1);
+      const monthEnd = new Date(year, monthIndex + 1, 0, 23, 59, 59, 999);
       
       const monthProjects = projects.filter(p => {
-        const created = new Date(p.createdAt || Date.now());
+        if (!p.createdAt) return false;
+        const created = new Date(p.createdAt);
         return created >= monthStart && created <= monthEnd;
       });
+      
       const monthExpenses = expenses.filter(e => {
-        const created = new Date(e.createdAt || Date.now());
+        if (!e.createdAt) return false;
+        const created = new Date(e.createdAt);
         return created >= monthStart && created <= monthEnd;
       });
 
+      months.push(monthNames[monthIndex]);
       monthlyIncome.push(monthProjects.reduce((sum, p) => sum + p.grossIncome, 0));
       monthlyBills.push(monthExpenses.reduce((sum, e) => sum + e.amount, 0));
-    });
+    }
 
     return { months, monthlyIncome, monthlyBills };
   };
@@ -169,6 +248,9 @@ export default function Dashboard() {
   const maxValue = Math.max(...monthlyIncome, ...monthlyBills, 3000);
   const chartHeight = 200;
   const chartWidth = 600;
+  const chartPadding = { top: 10, right: 20, bottom: 30, left: 50 };
+  const chartInnerWidth = chartWidth - chartPadding.left - chartPadding.right;
+  const chartInnerHeight = chartHeight - chartPadding.top - chartPadding.bottom;
 
   const getProjectComparisonData = () => {
     return projects.map(project => {
@@ -196,6 +278,26 @@ export default function Dashboard() {
     const totalExpenses = projectExpenses.reduce((sum, e) => sum + e.amount, 0);
     return project.grossIncome - totalExpenses > 0;
   }).length;
+
+  // Calculate average margin (Margen Prom.)
+  const calculateAverageMargin = () => {
+    if (projects.length === 0) return 0;
+    
+    const margins = projects.map(project => {
+      const projectExpenses = expenses.filter(e => {
+        const expenseProjectId = typeof e.projectId === 'object' ? e.projectId?._id : e.projectId;
+        return expenseProjectId === project._id;
+      });
+      const totalExpenses = projectExpenses.reduce((sum, e) => sum + e.amount, 0);
+      const netProfit = project.grossIncome - totalExpenses;
+      return project.grossIncome > 0 ? (netProfit / project.grossIncome) * 100 : 0;
+    });
+    
+    const averageMargin = margins.reduce((sum, margin) => sum + margin, 0) / margins.length;
+    return averageMargin;
+  };
+
+  const averageMargin = calculateAverageMargin();
 
   // Professional SVG Icons
   const RevenueIcon = () => (
@@ -256,6 +358,30 @@ export default function Dashboard() {
   const CalendarIcon = () => (
     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+    </svg>
+  );
+
+  const ProjectsIcon = () => (
+    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+    </svg>
+  );
+
+  const EmployeesIcon = () => (
+    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+    </svg>
+  );
+
+  const ProfitableIcon = () => (
+    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+    </svg>
+  );
+
+  const AverageMarginIcon = () => (
+    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
     </svg>
   );
 
@@ -492,44 +618,209 @@ export default function Dashboard() {
 
             {/* Dashboard Tab Content */}
             <div className="space-y-6">
+            {/* Summary Metrics Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              <MetricCard
+                title="Projects"
+                value={projects.length.toString()}
+                icon={<ProjectsIcon />}
+                color="blue"
+              />
+              <MetricCard
+                title="Employees"
+                value={employees.length.toString()}
+                icon={<EmployeesIcon />}
+                color="purple"
+              />
+              <MetricCard
+                title="Profitable"
+                value={profitableProjects.toString()}
+                icon={<ProfitableIcon />}
+                color="green"
+              />
+              <MetricCard
+                title="Margen Prom."
+                value={`${averageMargin.toFixed(1)}%`}
+                icon={<AverageMarginIcon />}
+                color={averageMargin >= 0 ? "green" : "red"}
+              />
+            </div>
+
             {/* Charts Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
               {/* Monthly Trend Chart */}
               <div className="bg-white rounded-lg border border-gray-200 p-6">
                 <h3 className="text-base font-semibold text-gray-900 mb-4">Monthly Trend</h3>
-                <div className="h-[200px] flex items-end justify-between gap-2">
-                  {months.map((month, index) => {
-                    const incomeHeight = (monthlyIncome[index] / maxValue) * chartHeight;
-                    const billsHeight = (monthlyBills[index] / maxValue) * chartHeight;
-                    return (
-                      <div key={index} className="flex-1 flex flex-col items-center gap-1">
-                        <div className="w-full flex items-end justify-center gap-1" style={{ height: `${chartHeight}px` }}>
-                          <div
-                            className="w-1/2 bg-blue-500 rounded-t"
-                            style={{ height: `${incomeHeight}px` }}
-                            title={`Income: $${monthlyIncome[index]}`}
-                          />
-                          <div
-                            className="w-1/2 bg-red-500 rounded-t"
-                            style={{ height: `${billsHeight}px` }}
-                            title={`Bills: $${monthlyBills[index]}`}
-                          />
-                        </div>
-                        <span className="text-xs text-gray-600 mt-2">{month}</span>
+                {months.length === 0 || (monthlyIncome.every(v => v === 0) && monthlyBills.every(v => v === 0)) ? (
+                  <div className="h-[200px] flex items-center justify-center">
+                    <p className="text-gray-500 text-sm">No income or bill data available for the selected period</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="relative w-full" style={{ height: `${chartHeight}px` }}>
+                      <svg width="100%" height={chartHeight} viewBox={`0 0 ${chartWidth} ${chartHeight}`} preserveAspectRatio="xMidYMid meet" className="overflow-visible">
+                        {/* Y-axis grid lines and labels */}
+                        {[0, 1, 2, 3, 4, 5, 6].map((tick) => {
+                          const y = chartPadding.top + ((6 - tick) / 6) * chartInnerHeight;
+                          const value = (tick / 6) * maxValue;
+                          return (
+                            <g key={tick}>
+                              <line
+                                x1={chartPadding.left}
+                                y1={y}
+                                x2={chartWidth - chartPadding.right}
+                                y2={y}
+                                stroke="#e5e7eb"
+                                strokeWidth="1"
+                                strokeDasharray="2,2"
+                              />
+                              <text
+                                x={chartPadding.left - 10}
+                                y={y + 4}
+                                fontSize="10"
+                                fill="#6b7280"
+                                textAnchor="end"
+                              >
+                                ${(value / 1000).toFixed(0)}k
+                              </text>
+                            </g>
+                          );
+                        })}
+                        
+                        {/* Calculate points for Income line */}
+                        {(() => {
+                          const points: string[] = [];
+                          const numMonths = months.length;
+                          const spacing = numMonths > 1 ? chartInnerWidth / (numMonths - 1) : chartInnerWidth / 2;
+                          
+                          months.forEach((_, index) => {
+                            const x = numMonths > 1 
+                              ? chartPadding.left + (index * spacing)
+                              : chartPadding.left + (chartInnerWidth / 2);
+                            const incomeValue = monthlyIncome[index] || 0;
+                            const y = chartPadding.top + chartInnerHeight - (incomeValue / maxValue) * chartInnerHeight;
+                            points.push(`${x},${y}`);
+                          });
+                          
+                          return (
+                            <polyline
+                              points={points.join(' ')}
+                              fill="none"
+                              stroke="#3b82f6"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          );
+                        })()}
+                        
+                        {/* Calculate points for Bills line */}
+                        {(() => {
+                          const points: string[] = [];
+                          const numMonths = months.length;
+                          const spacing = numMonths > 1 ? chartInnerWidth / (numMonths - 1) : chartInnerWidth / 2;
+                          
+                          months.forEach((_, index) => {
+                            const x = numMonths > 1 
+                              ? chartPadding.left + (index * spacing)
+                              : chartPadding.left + (chartInnerWidth / 2);
+                            const billsValue = monthlyBills[index] || 0;
+                            const y = chartPadding.top + chartInnerHeight - (billsValue / maxValue) * chartInnerHeight;
+                            points.push(`${x},${y}`);
+                          });
+                          
+                          return (
+                            <polyline
+                              points={points.join(' ')}
+                              fill="none"
+                              stroke="#ef4444"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          );
+                        })()}
+                        
+                        {/* Income data points (circles) */}
+                        {months.map((_, index) => {
+                          const numMonths = months.length;
+                          const spacing = numMonths > 1 ? chartInnerWidth / (numMonths - 1) : chartInnerWidth / 2;
+                          const x = numMonths > 1 
+                            ? chartPadding.left + (index * spacing)
+                            : chartPadding.left + (chartInnerWidth / 2);
+                          const incomeValue = monthlyIncome[index] || 0;
+                          const y = chartPadding.top + chartInnerHeight - (incomeValue / maxValue) * chartInnerHeight;
+                          
+                          return (
+                            <circle
+                              key={`income-${index}`}
+                              cx={x}
+                              cy={y}
+                              r="4"
+                              fill="#3b82f6"
+                              stroke="white"
+                              strokeWidth="2"
+                            />
+                          );
+                        })}
+                        
+                        {/* Bills data points (circles) */}
+                        {months.map((_, index) => {
+                          const numMonths = months.length;
+                          const spacing = numMonths > 1 ? chartInnerWidth / (numMonths - 1) : chartInnerWidth / 2;
+                          const x = numMonths > 1 
+                            ? chartPadding.left + (index * spacing)
+                            : chartPadding.left + (chartInnerWidth / 2);
+                          const billsValue = monthlyBills[index] || 0;
+                          const y = chartPadding.top + chartInnerHeight - (billsValue / maxValue) * chartInnerHeight;
+                          
+                          return (
+                            <circle
+                              key={`bills-${index}`}
+                              cx={x}
+                              cy={y}
+                              r="4"
+                              fill="#ef4444"
+                              stroke="white"
+                              strokeWidth="2"
+                            />
+                          );
+                        })}
+                      </svg>
+                      
+                      {/* X-axis month labels */}
+                      <div className="absolute bottom-0 left-0 right-0" style={{ paddingLeft: `${(chartPadding.left / chartWidth) * 100}%`, paddingRight: `${(chartPadding.right / chartWidth) * 100}%`, height: `${chartPadding.bottom}px` }}>
+                        {months.map((month, index) => {
+                          const numMonths = months.length;
+                          const spacing = numMonths > 1 ? 100 / (numMonths - 1) : 50;
+                          return (
+                            <span 
+                              key={index} 
+                              className="text-xs text-gray-600 absolute"
+                              style={{ 
+                                left: numMonths > 1 ? `${(index * spacing)}%` : '50%', 
+                                transform: 'translateX(-50%)',
+                                bottom: '0'
+                              }}
+                            >
+                              {month}
+                            </span>
+                          );
+                        })}
                       </div>
-                    );
-                  })}
-                </div>
-                <div className="flex justify-center gap-4 mt-4">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-blue-500 rounded"></div>
-                    <span className="text-xs text-gray-600">Income</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-red-500 rounded"></div>
-                    <span className="text-xs text-gray-600">Bills</span>
-                  </div>
-                </div>
+                    </div>
+                    <div className="flex justify-center gap-4 mt-4">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                        <span className="text-xs text-gray-600">→ Income</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                        <span className="text-xs text-gray-600">→ Bills</span>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Distribution of Expenses */}
@@ -743,11 +1034,43 @@ export default function Dashboard() {
                     const employeeIds = projectExpenses
                       .map(e => (typeof e.employeeId === 'object' ? e.employeeId?._id : e.employeeId))
                       .filter(Boolean) as string[];
-                    const employeeCount = new Set(employeeIds).size;
+                    const uniqueEmployeeIds = Array.from(new Set(employeeIds));
+                    const employeeCount = uniqueEmployeeIds.length;
+                    
+                    // Get employee details
+                    const projectEmployees = uniqueEmployeeIds.map(empId => {
+                      const employee = employees.find(emp => emp._id === empId);
+                      const employeeExpenses = projectExpenses.filter(e => {
+                        const expenseEmpId = typeof e.employeeId === 'object' ? e.employeeId?._id : e.employeeId;
+                        return expenseEmpId === empId;
+                      });
+                      const totalAmount = employeeExpenses.reduce((sum, e) => sum + e.amount, 0);
+                      const totalDaysWorked = employeeExpenses.reduce((sum, e) => sum + (e.daysWorked || 0), 0);
+                      
+                      return {
+                        employee,
+                        totalAmount,
+                        totalDaysWorked,
+                        expenseCount: employeeExpenses.length,
+                      };
+                    }).filter(item => item.employee);
+                    
                     return (
-                      <div key={project._id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div
+                        key={project._id}
+                        onClick={() => {
+                          setSelectedProjectForEmployees(project);
+                          setShowEmployeeModal(true);
+                        }}
+                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors group"
+                      >
                         <span className="text-sm font-medium text-gray-900">{project.name}</span>
-                        <span className="text-sm text-gray-600">{employeeCount} employee{employeeCount !== 1 ? 's' : ''}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-gray-600">{employeeCount} employee{employeeCount !== 1 ? 's' : ''}</span>
+                          <svg className="w-4 h-4 text-gray-400 group-hover:text-gray-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </div>
                       </div>
                     );
                   })}
@@ -1000,6 +1323,183 @@ export default function Dashboard() {
             loadData();
           }}
         />
+      )}
+      {showEmployeeModal && selectedProjectForEmployees && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+                  <PayrollIcon />
+                  Employees - {selectedProjectForEmployees.name}
+                </h2>
+                <p className="text-sm text-gray-500 mt-1">Employee details and payroll information</p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowEmployeeModal(false);
+                  setSelectedProjectForEmployees(null);
+                }}
+                className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md w-8 h-8 flex items-center justify-center transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-6">
+              {(() => {
+                const projectExpenses = expenses.filter(e => {
+                  const expenseProjectId = typeof e.projectId === 'object' ? e.projectId?._id : e.projectId;
+                  return expenseProjectId === selectedProjectForEmployees._id && e.type === 'payroll' && e.employeeId;
+                });
+                
+                if (projectExpenses.length === 0) {
+                  return (
+                    <div className="text-center py-12">
+                      <p className="text-gray-500">No employees assigned to this project</p>
+                    </div>
+                  );
+                }
+                
+                const employeeIds = projectExpenses
+                  .map(e => (typeof e.employeeId === 'object' ? e.employeeId?._id : e.employeeId))
+                  .filter(Boolean) as string[];
+                const uniqueEmployeeIds = Array.from(new Set(employeeIds));
+                
+                const projectEmployees = uniqueEmployeeIds.map(empId => {
+                  // Try to find employee from employees array first
+                  let employee = employees.find(emp => emp._id === empId);
+                  
+                  // If not found, try to get from populated expense data
+                  if (!employee) {
+                    const expenseWithEmployee = projectExpenses.find(e => {
+                      const expenseEmpId = typeof e.employeeId === 'object' ? e.employeeId?._id : e.employeeId;
+                      return expenseEmpId === empId && typeof e.employeeId === 'object' && e.employeeId;
+                    });
+                    if (expenseWithEmployee && typeof expenseWithEmployee.employeeId === 'object') {
+                      employee = expenseWithEmployee.employeeId as any;
+                    }
+                  }
+                  
+                  // If still not found, create a minimal employee object
+                  if (!employee) {
+                    employee = { _id: empId, name: 'Unknown Employee' };
+                  }
+                  
+                  const employeeExpenses = projectExpenses.filter(e => {
+                    const expenseEmpId = typeof e.employeeId === 'object' ? e.employeeId?._id : e.employeeId;
+                    return expenseEmpId === empId;
+                  });
+                  const totalAmount = employeeExpenses.reduce((sum, e) => sum + e.amount, 0);
+                  const totalDaysWorked = employeeExpenses.reduce((sum, e) => sum + (e.daysWorked || 0), 0);
+                  const totalAdvancement = employeeExpenses.reduce((sum, e) => sum + (e.advancement || 0), 0);
+                  
+                  return {
+                    employee,
+                    totalAmount,
+                    totalDaysWorked,
+                    totalAdvancement,
+                    expenseCount: employeeExpenses.length,
+                    expenses: employeeExpenses,
+                  };
+                }).filter(item => item.employee);
+                
+                return (
+                  <div className="space-y-4">
+                    {projectEmployees.map((item, index) => {
+                      const emp = item.employee;
+                      return (
+                        <div key={emp._id || index} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                          <div className="flex items-start justify-between mb-4">
+                            <div className="flex-1">
+                              <h3 className="text-lg font-semibold text-gray-900 mb-2">{emp.name || 'Unknown Employee'}</h3>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                                {emp.position && (
+                                  <div>
+                                    <span className="text-gray-500">Position:</span>
+                                    <span className="ml-2 text-gray-900 font-medium">{emp.position}</span>
+                                  </div>
+                                )}
+                                {emp.email && (
+                                  <div>
+                                    <span className="text-gray-500">Email:</span>
+                                    <span className="ml-2 text-gray-900">{emp.email}</span>
+                                  </div>
+                                )}
+                                {emp.phone && (
+                                  <div>
+                                    <span className="text-gray-500">Phone:</span>
+                                    <span className="ml-2 text-gray-900">{emp.phone}</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="border-t border-gray-200 pt-4 mt-4">
+                            <h4 className="text-sm font-semibold text-gray-700 mb-3">Payroll Summary</h4>
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                              <div className="bg-blue-50 rounded-lg p-3">
+                                <p className="text-xs text-gray-600 mb-1">Total Amount</p>
+                                <p className="text-lg font-semibold text-blue-700">${item.totalAmount.toLocaleString()}</p>
+                              </div>
+                              <div className="bg-green-50 rounded-lg p-3">
+                                <p className="text-xs text-gray-600 mb-1">Days Worked</p>
+                                <p className="text-lg font-semibold text-green-700">{item.totalDaysWorked}</p>
+                              </div>
+                              <div className="bg-purple-50 rounded-lg p-3">
+                                <p className="text-xs text-gray-600 mb-1">Advancement</p>
+                                <p className="text-lg font-semibold text-purple-700">${item.totalAdvancement.toLocaleString()}</p>
+                              </div>
+                              <div className="bg-gray-50 rounded-lg p-3">
+                                <p className="text-xs text-gray-600 mb-1">Payroll Entries</p>
+                                <p className="text-lg font-semibold text-gray-700">{item.expenseCount}</p>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {item.expenses.length > 0 && (
+                            <div className="border-t border-gray-200 pt-4 mt-4">
+                              <h4 className="text-sm font-semibold text-gray-700 mb-3">Payroll Details</h4>
+                              <div className="overflow-x-auto">
+                                <table className="w-full text-sm">
+                                  <thead>
+                                    <tr className="bg-gray-50 border-b border-gray-200">
+                                      <th className="text-left py-2 px-3 text-xs font-semibold text-gray-700">Date</th>
+                                      <th className="text-left py-2 px-3 text-xs font-semibold text-gray-700">Category</th>
+                                      <th className="text-left py-2 px-3 text-xs font-semibold text-gray-700">Days</th>
+                                      <th className="text-left py-2 px-3 text-xs font-semibold text-gray-700">Amount</th>
+                                      <th className="text-left py-2 px-3 text-xs font-semibold text-gray-700">Advancement</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {item.expenses.map((expense: any, expIndex: number) => (
+                                      <tr key={expense._id || expIndex} className="border-b border-gray-100 hover:bg-gray-50">
+                                        <td className="py-2 px-3 text-gray-700">
+                                          {expense.createdAt ? new Date(expense.createdAt).toLocaleDateString() : '-'}
+                                        </td>
+                                        <td className="py-2 px-3 text-gray-700">{expense.category || '-'}</td>
+                                        <td className="py-2 px-3 text-gray-700">{expense.daysWorked || 0}</td>
+                                        <td className="py-2 px-3 text-gray-700 font-medium">${(expense.amount || 0).toLocaleString()}</td>
+                                        <td className="py-2 px-3 text-gray-700">${(expense.advancement || 0).toLocaleString()}</td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

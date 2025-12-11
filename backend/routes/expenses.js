@@ -29,7 +29,7 @@ router.get('/', authenticate, async (req, res) => {
 
     const expenses = await Expense.find(query)
       .populate('projectId', 'name')
-      .populate('employeeId', 'name')
+      .populate('employeeId', 'name email phone position')
       .sort({ createdAt: -1 });
     res.json(expenses);
   } catch (error) {
