@@ -21,20 +21,15 @@
       "static/chunks/main-app.js",
       "static/chunks/app/dashboard/page.js"
     ],
-    "/dear/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/dear/page.js"
-    ],
     "/roster/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/roster/page.js"
     ],
-    "/operating-expenses/page": [
+    "/dear/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/operating-expenses/page.js"
+      "static/chunks/app/dear/page.js"
     ]
   }
 }
