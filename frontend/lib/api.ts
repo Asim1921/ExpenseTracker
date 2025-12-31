@@ -20,6 +20,12 @@ export const authAPI = {
     api.post('/auth/register', data),
   login: (data: { email: string; password: string }) =>
     api.post('/auth/login', data),
+  forgotPassword: (data: { email: string }) =>
+    api.post('/auth/forgot-password', data),
+  verifyOTP: (data: { email: string; otp: string }) =>
+    api.post('/auth/verify-otp', data),
+  resetPassword: (data: { email: string; otp: string; newPassword: string }) =>
+    api.post('/auth/reset-password', data),
 };
 
 export const projectAPI = {

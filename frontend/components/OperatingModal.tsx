@@ -18,6 +18,22 @@ export default function OperatingModal({ onClose, onSuccess }: OperatingModalPro
   const [projects, setProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showAddCategory, setShowAddCategory] = useState(false);
+  const [newCategory, setNewCategory] = useState('');
+  const [categories, setCategories] = useState<string[]>([
+    'Utilities',
+    'Rent',
+    'Insurance',
+    'Equipment',
+    'Maintenance',
+    'Water',
+    'Ice',
+    'Food',
+    'Gas',
+    'Dump Trailer Material',
+    'Subcontractors',
+    'Other',
+  ]);
 
   useEffect(() => {
     loadProjects();
@@ -29,6 +45,16 @@ export default function OperatingModal({ onClose, onSuccess }: OperatingModalPro
       setProjects(res.data);
     } catch (error) {
       console.error('Error loading projects:', error);
+    }
+  };
+
+  const handleAddCategory = () => {
+    if (newCategory.trim() && !categories.includes(newCategory.trim())) {
+      const trimmedCategory = newCategory.trim();
+      setCategories([...categories, trimmedCategory]);
+      setFormData({ ...formData, category: trimmedCategory });
+      setNewCategory('');
+      setShowAddCategory(false);
     }
   };
 
@@ -113,9 +139,57 @@ export default function OperatingModal({ onClose, onSuccess }: OperatingModalPro
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              Category
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-sm font-medium text-gray-700">
+                Category
+              </label>
+              <button
+                type="button"
+                onClick={() => setShowAddCategory(!showAddCategory)}
+                className="text-xs text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Add a Category
+              </button>
+            </div>
+            {showAddCategory ? (
+              <div className="mb-2 flex gap-2">
+                <input
+                  type="text"
+                  value={newCategory}
+                  onChange={(e) => setNewCategory(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddCategory();
+                    }
+                  }}
+                  placeholder="Enter new category name"
+                  className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:border-gray-900 outline-none transition-all text-sm"
+                  autoFocus
+                />
+                <button
+                  type="button"
+                  onClick={handleAddCategory}
+                  disabled={!newCategory.trim() || categories.includes(newCategory.trim())}
+                  className="px-3 py-2 bg-gray-900 hover:bg-gray-800 text-white rounded-md transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                >
+                  Add
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAddCategory(false);
+                    setNewCategory('');
+                  }}
+                  className="px-3 py-2 border border-gray-300 hover:bg-gray-50 rounded-md transition-all text-sm font-medium text-gray-700"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : null}
             <select
               required
               value={formData.category}
@@ -123,12 +197,11 @@ export default function OperatingModal({ onClose, onSuccess }: OperatingModalPro
               className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:border-gray-900 outline-none transition-all text-sm"
             >
               <option value="">Select category</option>
-              <option value="Utilities">Utilities</option>
-              <option value="Rent">Rent</option>
-              <option value="Insurance">Insurance</option>
-              <option value="Equipment">Equipment</option>
-              <option value="Maintenance">Maintenance</option>
-              <option value="Other">Other</option>
+              {categories.map((category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
+              ))}
             </select>
           </div>
 
